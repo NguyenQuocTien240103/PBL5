@@ -1,23 +1,10 @@
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import threading
 import time
-from app.routers import detect_face
 
 app = FastAPI()
-
-# Cấu hình CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Địa chỉ frontend
-    allow_credentials=True,
-    allow_methods=["*"],  # Cho phép tất cả các phương thức
-    allow_headers=["*"],  # Cho phép tất cả các headers
-)
-
-app.include_router(detect_face.router)
 
 cap = None  # Biến lưu camera
 camera_active = False  # Trạng thái camera
