@@ -45,7 +45,8 @@ async def generate_frames(face_id: str):
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
             if count < 30:
-                face_crop = gray[y:y+h, x:x+w]
+                # face_crop = gray[y:y+h, x:x+w]
+                face_crop = frame[y:y+h, x:x+w] 
                 count += 1
                 cv2.imwrite(f"{dataset_dir}/{face_id}_{count}.jpg", face_crop)
 
@@ -66,8 +67,9 @@ async def generate_frames(face_id: str):
     # Sau khi stop, tự động release camera
     with camera_lock:
         if cam is not None:
-            cam.release()
+            cam.release() 
             cam = None
+
 
 @router.get("/get_face")
 async def detect_face(face_id: str = Query(..., description="ID của người cần chụp")):

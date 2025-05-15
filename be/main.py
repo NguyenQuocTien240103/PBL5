@@ -5,71 +5,23 @@ import cv2
 import threading
 import time
 from app.routers import detect_face
+from app.routers import face_recognize
+from app.routers import camera
+from app.routers import auth
+from pymongo import MongoClient
+# from config.database import db
 
 app = FastAPI()
 
-# Cấu hình CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Địa chỉ frontend
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],  # Cho phép tất cả các phương thức
-    allow_headers=["*"],  # Cho phép tất cả các headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(detect_face.router)
-
-cap = None  # Biến lưu camera
-camera_active = False  # Trạng thái camera
-lock = threading.Lock()
-
-def generate_frames():
-    global cap, camera_active
-    while camera_active:
-        with lock:
-            if cap is None or not cap.isOpened():
-                break
-
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            _, buffer = cv2.imencode('.jpg', frame)
-            frame_bytes = buffer.tobytes()
-
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-
-@app.get("/video_feed")
-async def video_feed():
-    global cap, camera_active
-    with lock:
-        if cap:  # Nếu camera đang mở, đóng lại trước khi mở lại
-            cap.release()
-            cap = None
-        # Mở lại camera
-        cap = cv2.VideoCapture(0)
-        camera_active = True
-        time.sleep(1)  # Chờ camera khởi động
-    return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
-
-@app.get("/stop_camera")
-async def stop_camera():
-    global cap, camera_active
-    with lock:
-        camera_active = False  # Dừng luồng camera
-        if cap:
-            cap.release()
-            cap = None  # Giải phóng camera
-    return {"message": "Camera stopped"}
-
-# Đóng camera khi server dừng
-import atexit
-@atexit.register
-def cleanup():
-    global cap, camera_active
-    with lock:
-        camera_active = False
-        if cap:
-            cap.release()
-            cap = None
+app.include_router(face_recognize.router)
+app.include_router(camera.router)
+app.include_router(auth.router)
