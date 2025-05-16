@@ -100,24 +100,34 @@ async def websocket_endpoint(websocket: WebSocket, face_id: str):
 
 
 
-# ----------------------Quet khuon mat----------------------
-base_dir = os.path.dirname(__file__)
+# # ----------------------Quet khuon mat----------------------
+# base_dir = os.path.dirname(__file__)
 
-# Nối với file XML trong cùng thư mục
-cascade_path = os.path.join(base_dir, "haarcascade_frontalface_default.xml")
+# # Nối với file XML trong cùng thư mục
+# cascade_path = os.path.join(base_dir, "haarcascade_frontalface_default.xml")
 
-# Tạo bộ nhận diện khuôn mặt
-face_detector = cv2.CascadeClassifier(cascade_path)
+# # Tạo bộ nhận diện khuôn mặt
+# face_detector = cv2.CascadeClassifier(cascade_path)
 
-# Tạo thư mục lưu ảnh nếu chưa tồn tại
-if not os.path.exists("frames"):
-    os.makedirs("frames")
 
-@router.websocket("/ws") 
-async def websocket_endpoint(websocket: WebSocket):
+@router.websocket("/ws/get_face/{face_id}") 
+async def websocket_endpoint(websocket: WebSocket, face_id: str):
     await websocket.accept()
     print("🔌 Client connected") 
- 
+
+    # ----------------------Quet khuon mat----------------------
+    base_dir = os.path.dirname(__file__)
+
+    # Nối với file XML trong cùng thư mục
+    cascade_path = os.path.join(base_dir, "haarcascade_frontalface_default.xml")
+
+    # Tạo bộ nhận diện khuôn mặt
+    face_detector = cv2.CascadeClassifier(cascade_path)
+
+    # 🔍 Tạo thư mục nếu chưa tồn tại
+    save_dir = f"dataset/detect_face/{face_id}"
+    os.makedirs(save_dir, exist_ok=True)
+
     try:
         while True:
             data = await websocket.receive_bytes()
@@ -133,8 +143,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if len(faces) > 0:
                 # Nếu phát hiện khuôn mặt, lưu ảnh
-                filename = f"frames/frame_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.jpg"
-                with open(filename, "wb") as f:
+                filename = f"dataset/detect_face/{face_id}/{face_id}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.jpg"
+                with open(filename, "wb") as f: 
                     f.write(data)
                 print(f"📷 Saved: {filename}")
     except WebSocketDisconnect:

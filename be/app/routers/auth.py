@@ -5,9 +5,10 @@ from fastapi import HTTPException, status
 db = get_database()
 router = APIRouter()
 
-@router.get("/auth/register",status_code=201)
+@router.post("/auth/register",status_code=201)
 async def register(user: User):
     username = user.username
+    password = user.password    
     # Simulate a database check
     existing_user = db.users.find_one({"username": username})
     if existing_user:
@@ -17,7 +18,7 @@ async def register(user: User):
         )
     else:
         db.users.insert_one({"username": username, "password": password})
-        return {"message": "Registration successful", "username": username}
+        return {"message": "Registration successful"}
       
 
 
