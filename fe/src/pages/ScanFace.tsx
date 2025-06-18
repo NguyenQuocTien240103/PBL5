@@ -1,112 +1,3 @@
-// import React, { useEffect, useRef, useState } from "react";
-
-// function ScanFace() {
-//   const videoRef = useRef<HTMLVideoElement | null>(null);
-//   const socketRef = useRef<WebSocket | null>(null);
-//   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
-//   const [isClickScan, setIsClickScan] = useState<boolean>(false);
-//   // useEffect(() => {
-//   //   // Kết nối WebSocket
-//   //   socketRef.current = new WebSocket("ws://localhost:8000/ws"); // Hoặc ws://localhost:8000/ws nếu dùng FastAPI
-
-//   //   socketRef.current.onopen = () => {
-//   //     console.log("✅ WebSocket connected");
-//   //     startWebcam();
-//   //   };
-
-//   //   socketRef.current.onclose = () => {
-//   //     console.log("❌ WebSocket disconnected");
-//   //   };
-
-//   //   socketRef.current.onerror = (error) => {
-//   //     console.error("WebSocket error:", error);
-//   //   };
-
-//   //   return () => {
-//   //     socketRef.current?.close();
-//   //   };
-//   // }, []);
-
-//   const startWebcam = () => {
-//     socketRef.current = new WebSocket("ws://localhost:8000/ws"); // Hoặc ws://localhost:8000/ws nếu dùng FastAPI
-//     socketRef.current.onmessage = (event) => {
-//       console.log("✅ Server response:", event.data);
-//     };
-
-//     navigator.mediaDevices
-//       .getUserMedia({ video: true })
-//       .then((stream) => {
-//         const video = videoRef.current;
-//         if (video) {
-//           video.srcObject = stream;
-//           video.onloadedmetadata = () => {
-//             video.play();
-//             streamFrame();
-//           };
-//         }
-//       })
-//       .catch((err) => console.error("Lỗi webcam:", err));
-//   };
-
-//   const streamFrame = () => {
-//     const video = videoRef.current;
-//     const canvas = canvasRef.current;
-//     const ctx = canvas.getContext("2d");
-
-//     const sendFrame = () => {
-//       if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
-//         requestAnimationFrame(sendFrame);
-//         return;
-//       }
-
-//       canvas.width = video.videoWidth;
-//       canvas.height = video.videoHeight;
-//       ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-//       canvas.toBlob(
-//         (blob) => {
-//           if (blob) {
-//             console.log("Blob created:", blob.size);
-//             if (socketRef.current?.readyState === WebSocket.OPEN) {
-//               socketRef.current.send(blob);
-//             } else {
-//               console.warn("WebSocket not open");
-//             }
-//           } else {
-//             console.error("Failed to create blob");
-//           }
-//           requestAnimationFrame(sendFrame);
-//         },
-//         "image/jpeg",
-//         0.7
-//       );
-//     };
-
-//     requestAnimationFrame(sendFrame);
-//   };
-
-//   return (
-//     <div className="flex flex-col items-center justify-center gap-2 mt-2">
-//       {isClickScan && (
-//         <video
-//           ref={videoRef}
-//           autoPlay
-//           muted
-//           playsInline
-//           style={{ border: "2px solid black" }}
-//           width={640}
-//           height={480}
-//         />
-//       )}
-//       <button className="bg-gray-500 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:bg-gray-600 transition duration-300 cursor-pointer">
-//         Start Scan
-//       </button>
-//     </div>
-//   );
-// }
-
-// export default ScanFace;
-
 import React, { useEffect, useRef, useState } from "react";
 
 function ScanFace() {
@@ -114,7 +5,7 @@ function ScanFace() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
-
+  const [scanUser, setScanUser] = useState<String>("");
   useEffect(() => {
     let stream: MediaStream | null = null;
     let animationFrameId: number | null = null;
@@ -129,7 +20,9 @@ function ScanFace() {
 
         // 2. Mở kết nối WebSocket
         socketRef.current = new WebSocket(
-          `ws://localhost:8000/ws/get_face/${localStorage.getItem("username")}`
+          `${
+            import.meta.env.VITE_APP_SOCKET_URL
+          }/get_face/${localStorage.getItem("username")}`
         );
 
         socketRef.current.onopen = () => {
@@ -138,6 +31,11 @@ function ScanFace() {
 
         socketRef.current.onmessage = (event) => {
           console.log("📩 Server response:", event.data);
+          if (event.data.includes("10")) {
+            setScanUser(event.data);
+          } else {
+            setScanUser(event.data);
+          }
         };
 
         // 3. Gửi frame mỗi giây
@@ -211,10 +109,12 @@ function ScanFace() {
     }
 
     setIsScanning(false);
+    setScanUser("");
   };
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 mt-2">
+      <h1>{scanUser}</h1>
       {isScanning && <video ref={videoRef} autoPlay muted playsInline />}
 
       <div className="flex gap-4">
